@@ -41,15 +41,15 @@ public static class NotePalette
 
     public static SolidColorBrush GetForegroundBrush(NoteColor color) => color switch
     {
-        NoteColor.Yellow => CreateFrozen("#FF4E342E"),
-        NoteColor.Pink   => CreateFrozen("#FF4E342E"),
+        NoteColor.Yellow => CreateFrozen("#FF3E2723"),
+        NoteColor.Pink   => CreateFrozen("#FF3E2723"),
         NoteColor.Green  => CreateFrozen("#FF1B5E20"),
         NoteColor.Blue   => CreateFrozen("#FF0D47A1"),
-        NoteColor.Purple => CreateFrozen("#FF4A148C"),
-        NoteColor.Orange => CreateFrozen("#FF4E342E"),
-        NoteColor.White  => CreateFrozen("#FF424242"),
+        NoteColor.Purple => CreateFrozen("#FF311B92"),
+        NoteColor.Orange => CreateFrozen("#FF3E2723"),
+        NoteColor.White  => CreateFrozen("#FF212121"),
         NoteColor.Dark   => CreateFrozen("#FFFFFFFF"),
-        _                => CreateFrozen("#FF4E342E")
+        _                => CreateFrozen("#FF3E2723")
     };
 
     /// <summary>

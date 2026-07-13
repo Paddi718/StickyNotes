@@ -51,12 +51,13 @@
         <Setter Property="TextWrapping" Value="Wrap" />
         <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
         <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
-        <Setter Property="Padding" Value="6,4" />
+        <Setter Property="Padding" Value="8,6" />
         <Setter Property="CaretBrush" Value="{Binding ForegroundBrush}" />
         <Setter Property="SelectionBrush" Value="#66349EDB" />
         <Setter Property="SelectionOpacity" Value="0.8" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontFamily" Value="LXGW WenKai, Segoe UI Variable, Segoe UI" />
         <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
         <Setter Property="TextOptions.TextRenderingMode" Value="Auto" />
         <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled" />
@@ -84,11 +85,11 @@
         <Setter Property="TextWrapping" Value="NoWrap" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI" />
+        <Setter Property="FontFamily" Value="LXGW WenKai, Segoe UI Variable, Segoe UI" />
         <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
         <Setter Property="TextOptions.TextRenderingMode" Value="Auto" />
         <Setter Property="VerticalScrollBarVisibility" Value="Disabled" />
-        <Setter Property="Padding" Value="6,3" />
+        <Setter Property="Padding" Value="8,4" />
     </Style>
 
     <!-- ===== Glass slider (round thumb, glass track) ===== -->

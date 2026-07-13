@@ -21,14 +21,14 @@
     <SolidColorBrush x:Key="NoteWhiteBrush" Color="#FFF5F5F5" />
     <SolidColorBrush x:Key="NoteDarkBrush" Color="#FF2D2D30" />
 
-    <!-- ===== Foreground text brushes (enhanced contrast for glass readability) ===== -->
-    <SolidColorBrush x:Key="NoteYellowForeground" Color="#FF4E342E" />
-    <SolidColorBrush x:Key="NotePinkForeground" Color="#FF4E342E" />
+    <!-- ===== Foreground text brushes (high contrast for glass readability) ===== -->
+    <SolidColorBrush x:Key="NoteYellowForeground" Color="#FF3E2723" />
+    <SolidColorBrush x:Key="NotePinkForeground" Color="#FF3E2723" />
     <SolidColorBrush x:Key="NoteGreenForeground" Color="#FF1B5E20" />
     <SolidColorBrush x:Key="NoteBlueForeground" Color="#FF0D47A1" />
-    <SolidColorBrush x:Key="NotePurpleForeground" Color="#FF4A148C" />
-    <SolidColorBrush x:Key="NoteOrangeForeground" Color="#FF4E342E" />
-    <SolidColorBrush x:Key="NoteWhiteForeground" Color="#FF424242" />
+    <SolidColorBrush x:Key="NotePurpleForeground" Color="#FF311B92" />
+    <SolidColorBrush x:Key="NoteOrangeForeground" Color="#FF3E2723" />
+    <SolidColorBrush x:Key="NoteWhiteForeground" Color="#FF212121" />
     <SolidColorBrush x:Key="NoteDarkForeground" Color="#FFFFFFFF" />
 
     <!-- ===== Glass effect brushes ===== -->

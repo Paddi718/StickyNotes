@@ -16,8 +16,8 @@
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="Auto"
         RenderOptions.ClearTypeHint="Enabled"
-        TextElement.FontFamily="Segoe UI Variable, Segoe UI"
-        TextElement.FontSize="14">
+        TextElement.FontFamily="LXGW WenKai, Segoe UI Variable, Segoe UI"
+        TextElement.FontSize="15">
 
     <!-- Right-click context menu (for unlocking when controls are hidden) -->
     <Window.ContextMenu>
