@@ -8,6 +8,8 @@ using System.Windows.Threading;
 using ContextMenuEventArgs = System.Windows.Controls.ContextMenuEventArgs;
 using Button = System.Windows.Controls.Button;
 using TextBox = System.Windows.Controls.TextBox;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using Key = System.Windows.Input.Key;
 using StickyNotes.Native;
 using StickyNotes.Themes;
 using StickyNotes.Utilities;
@@ -88,6 +90,9 @@ public partial class NoteWindow : Window
                 WindowConstants.DWMWA_WINDOW_CORNER_PREFERENCE,
                 ref pref, sizeof(int));
         });
+
+        // Apply initial line spacing
+        ApplyLineSpacing();
 
         // One-time verification log
         SafeExec.Try(() =>
@@ -191,6 +196,22 @@ public partial class NoteWindow : Window
         {
             UpdateAcrylicTint();
         }
+
+        if (e.PropertyName == nameof(NoteViewModel.LineSpacing))
+        {
+            ApplyLineSpacing();
+        }
+    }
+
+    /// <summary>
+    /// Applies line spacing multiplier to the content TextBox.
+    /// Base line height = 16 * 1.5 = 24px; scaled by LineSpacing / 1.5.
+    /// </summary>
+    private void ApplyLineSpacing()
+    {
+        var baseHeight = 24.0; // 16px font * 1.5 default
+        var lineHeight = baseHeight * (_viewModel.LineSpacing / 1.5);
+        ContentBox.SetValue(System.Windows.Controls.TextBlock.LineHeightProperty, lineHeight);
     }
 
     /// <summary>
@@ -375,6 +396,64 @@ public partial class NoteWindow : Window
             current = System.Windows.Media.VisualTreeHelper.GetParent(current);
         }
         return null;
+    }
+
+    /// <summary>
+    /// Toolbar ☑ button: toggles checkbox at the current caret line.
+    /// </summary>
+    private void TodoToggle_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsLocked) return;
+        ToggleWithCaretRestore(ContentBox.CaretIndex);
+    }
+
+    /// <summary>
+    /// Ctrl+D: toggle checkbox on current line.
+    /// </summary>
+    private void ContentBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.KeyboardDevice.Modifiers == ModifierKeys.Control && e.Key == Key.D)
+        {
+            ToggleWithCaretRestore(ContentBox.CaretIndex);
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// Click on ☐/☑ glyph → toggle. Otherwise let the click pass through.
+    /// </summary>
+    private void ContentBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        var pos = e.GetPosition(ContentBox);
+        var charIndex = ContentBox.GetCharacterIndexFromPoint(pos, true);
+        if (charIndex < 0) return;
+        var text = ContentBox.Text;
+        if (charIndex < text.Length && (text[charIndex] == '☐' || text[charIndex] == '☑'))
+        {
+            // Don't use ToggleWithCaretRestore here — the mouse click itself
+            // will set the caret, so just toggle at the clicked position
+            _viewModel.ToggleTodoAtCursor(charIndex);
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>Toggle and keep caret on the same line.</summary>
+    private void ToggleWithCaretRestore(int pos)
+    {
+        var text = ContentBox.Text;
+        // Find the current line's start
+        var ls = text.LastIndexOf('\n', pos);
+        ls = ls < 0 ? 0 : ls + 1;
+        // Remember offset within the line
+        var offset = pos - ls;
+
+        _viewModel.ToggleTodoAtCursor(pos);
+
+        // Restore caret to the same line, same offset
+        var newText = ContentBox.Text;
+        var newLs = newText.LastIndexOf('\n', Math.Min(ls, newText.Length - 1));
+        newLs = newLs < 0 ? 0 : newLs + 1;
+        ContentBox.CaretIndex = Math.Min(newLs + offset, newText.Length);
     }
 
     private void Window_ContextMenuOpening(object sender, ContextMenuEventArgs e)

@@ -25,6 +25,9 @@ public sealed class Note
 
     public double FontSize { get; set; } = 14;
 
+    /// <summary>Line spacing multiplier (1.0–2.5). Applied to the note content.</summary>
+    public double LineSpacing { get; set; } = 1.5;
+
     /// <summary>Foreground (text) color preset. <c>Auto</c> derives a readable
     /// color from <see cref="Color"/>; other values are explicit overrides for
     /// when low <see cref="Opacity"/> makes the default text hard to read.</summary>

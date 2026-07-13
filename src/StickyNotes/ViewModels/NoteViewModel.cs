@@ -32,9 +32,13 @@ public sealed class NoteViewModel : ViewModelBase
         _saveTimer.Tick += OnSaveTimerTick;
 
         Title = note.Title;
-        Content = note.Content;
+        // Convert Markdown checkboxes → Unicode glyphs for display
+        Content = note.Content
+            .Replace("- [x] ", "☑ ")
+            .Replace("- [ ] ", "☐ ");
         _color = note.Color;
         _fontSize = note.FontSize;
+        _lineSpacing = note.LineSpacing;
         _opacity = note.Opacity;
         _isLocked = note.IsLocked;
         _fontColor = note.FontColor;
@@ -65,7 +69,8 @@ public sealed class NoteViewModel : ViewModelBase
         {
             if (SetProperty(ref _content, value))
             {
-                _note.Content = value;
+                // Store in Markdown format for disk, display with glyphs in memory
+                _note.Content = ToStorageFormat(value);
                 ScheduleSave();
             }
         }
@@ -178,7 +183,56 @@ public sealed class NoteViewModel : ViewModelBase
 
     public RelayCommand DecreaseFontCommand => new(_ => FontSize -= 1);
 
+    private double _lineSpacing;
+    public double LineSpacing
+    {
+        get => _lineSpacing;
+        set
+        {
+            var clamped = Math.Clamp(value, 1.0, 2.5);
+            if (SetProperty(ref _lineSpacing, clamped))
+            {
+                _note.LineSpacing = clamped;
+                ScheduleSave();
+            }
+        }
+    }
+
+    public RelayCommand IncreaseLineSpacingCommand => new(_ => LineSpacing += 0.25);
+    public RelayCommand DecreaseLineSpacingCommand => new(_ => LineSpacing -= 0.25);
+
     public RelayCommand ToggleLockCommand => new(_ => IsLocked = !IsLocked);
+
+    /// <summary>
+    /// Toggles checkbox glyph on the current line (☐ ↔ ☑).
+    /// Content is stored with Unicode glyphs; conversion to Markdown
+    /// happens only on save.
+    /// </summary>
+    public void ToggleTodoAtCursor(int cursorPos)
+    {
+        var text = Content;
+        if (string.IsNullOrEmpty(text)) return;
+
+        var lineStart = text.LastIndexOf('\n', Math.Min(cursorPos, text.Length - 1));
+        lineStart = lineStart < 0 ? 0 : lineStart + 1;
+        var lineEnd = text.IndexOf('\n', lineStart);
+        if (lineEnd < 0) lineEnd = text.Length;
+
+        var line = text[lineStart..lineEnd];
+        var before = text[..lineStart];
+        var after = text[lineEnd..];
+
+        if (line.StartsWith("☑ "))
+            Content = before + "☐ " + line[2..] + after;
+        else if (line.StartsWith("☐ "))
+            Content = before + "☑ " + line[2..] + after;
+        else
+            Content = before + "☐ " + line + after;
+    }
+
+    /// <summary>Converts display glyphs back to Markdown for disk storage.</summary>
+    private string ToStorageFormat(string display) =>
+        display.Replace("☑ ", "- [x] ").Replace("☐ ", "- [ ] ");
 
     // ---------- Position & size write-back (called from window code-behind) ----------
 

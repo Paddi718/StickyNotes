@@ -17,7 +17,7 @@
         TextOptions.TextRenderingMode="Auto"
         RenderOptions.ClearTypeHint="Enabled"
         TextElement.FontFamily="LXGW WenKai, Segoe UI Variable, Segoe UI"
-        TextElement.FontSize="15">
+        TextElement.FontSize="16">
 
     <!-- Right-click context menu (for unlocking when controls are hidden) -->
     <Window.ContextMenu>
@@ -55,7 +55,7 @@
                 <TextBox Grid.Column="0"
                          Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
                          Foreground="{Binding ForegroundBrush}"
-                         FontSize="14"
+                         FontSize="16"
                          FontWeight="SemiBold"
                          VerticalAlignment="Center"
                          Margin="6,0,0,0"
@@ -103,6 +103,20 @@
                             FontSize="11"
                             ToolTip="缩小字体" />
                     <Button Style="{StaticResource NoteToolbarButton}"
+                            Content="↕⁺"
+                            Command="{Binding IncreaseLineSpacingCommand}"
+                            FontSize="11"
+                            ToolTip="增加行间距" />
+                    <Button Style="{StaticResource NoteToolbarButton}"
+                            Content="↕⁻"
+                            Command="{Binding DecreaseLineSpacingCommand}"
+                            FontSize="11"
+                            ToolTip="减少行间距" />
+                    <Button Style="{StaticResource NoteToolbarButton}"
+                            Content="☑"
+                            Click="TodoToggle_Click"
+                            ToolTip="切换待办 (Ctrl+D)" />
+                    <Button Style="{StaticResource NoteToolbarButton}"
                             Content="🔒"
                             Command="{Binding ToggleLockCommand}"
                             ToolTip="锁定便签" />
@@ -129,14 +143,17 @@
                        Fill="{StaticResource NoteSeparatorBrush}"
                        Style="{StaticResource AutoHideElement}" />
 
-            <!-- Note content -->
-            <TextBox Grid.Row="2"
+            <!-- Content TextBox: ☐/☑ glyphs via converter, click to toggle -->
+            <TextBox x:Name="ContentBox"
+                     Grid.Row="2"
                      Text="{Binding Content, UpdateSourceTrigger=PropertyChanged}"
                      Foreground="{Binding ForegroundBrush}"
                      FontSize="{Binding FontSize}"
                      Margin="4,2,4,2"
                      IsReadOnly="{Binding IsLocked}"
-                     ToolTip="便签内容">
+                     PreviewKeyDown="ContentBox_PreviewKeyDown"
+                     PreviewMouseLeftButtonDown="ContentBox_PreviewMouseLeftButtonDown"
+                     ToolTip="便签内容&#x0a;点击 ☐/☑ 或 Ctrl+D 切换待办状态">
                 <TextBox.Style>
                     <Style TargetType="TextBox" BasedOn="{StaticResource NoteBodyTextBox}">
                         <Style.Triggers>
