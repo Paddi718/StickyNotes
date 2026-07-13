@@ -42,3 +42,5 @@ Desktop.ini
 *.log
 crash*.txt
 .playwright-mcp/
+*.png
+test_*.ps1
