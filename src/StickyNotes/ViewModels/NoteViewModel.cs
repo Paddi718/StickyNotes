@@ -1,0 +1,231 @@
+using System.Windows.Media;
+using System.Windows.Threading;
+using StickyNotes.Models;
+using StickyNotes.Services.Interfaces;
+using StickyNotes.Themes;
+using StickyNotes.Utilities;
+
+namespace StickyNotes.ViewModels;
+
+/// <summary>
+/// ViewModel for a single sticky note. Owns the Note model, exposes
+/// bindable properties, and persists changes with a 1-second debounce
+/// to avoid writing to disk on every keystroke.
+/// </summary>
+public sealed class NoteViewModel : ViewModelBase
+{
+    private readonly Note _note;
+    private readonly INoteService _noteService;
+    private readonly INoteWindowManager _windowManager;
+    private readonly DispatcherTimer _saveTimer;
+
+    public NoteViewModel(Note note, INoteService noteService, INoteWindowManager windowManager)
+    {
+        _note = note ?? throw new ArgumentNullException(nameof(note));
+        _noteService = noteService;
+        _windowManager = windowManager;
+
+        _saveTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(1)
+        };
+        _saveTimer.Tick += OnSaveTimerTick;
+
+        Title = note.Title;
+        Content = note.Content;
+        _color = note.Color;
+        _fontSize = note.FontSize;
+        _opacity = note.Opacity;
+        _isLocked = note.IsLocked;
+        _fontColor = note.FontColor;
+        _updatedAt = note.UpdatedAt;
+    }
+
+    // ---------- Bindable properties ----------
+
+    private string _title = "";
+    public string Title
+    {
+        get => _title;
+        set
+        {
+            if (SetProperty(ref _title, value))
+            {
+                _note.Title = value;
+                ScheduleSave();
+            }
+        }
+    }
+
+    private string _content = "";
+    public string Content
+    {
+        get => _content;
+        set
+        {
+            if (SetProperty(ref _content, value))
+            {
+                _note.Content = value;
+                ScheduleSave();
+            }
+        }
+    }
+
+    private NoteColor _color;
+    public NoteColor Color
+    {
+        get => _color;
+        set
+        {
+            if (SetProperty(ref _color, value))
+            {
+                _note.Color = value;
+                OnPropertyChanged(nameof(BackgroundBrush));
+                OnPropertyChanged(nameof(ForegroundBrush));
+                ScheduleSave();
+            }
+        }
+    }
+
+    private double _fontSize;
+    public double FontSize
+    {
+        get => _fontSize;
+        set
+        {
+            // Clamp to a sensible range
+            var clamped = Math.Clamp(value, 10, 36);
+            if (SetProperty(ref _fontSize, clamped))
+            {
+                _note.FontSize = clamped;
+                ScheduleSave();
+            }
+        }
+    }
+
+    private FontColor _fontColor;
+    public FontColor FontColor
+    {
+        get => _fontColor;
+        set
+        {
+            if (SetProperty(ref _fontColor, value))
+            {
+                _note.FontColor = value;
+                OnPropertyChanged(nameof(ForegroundBrush));
+                ScheduleSave();
+            }
+        }
+    }
+
+    private double _opacity;
+    public double Opacity
+    {
+        get => _opacity;
+        set
+        {
+            var clamped = Math.Clamp(value, 0.1, 1.0);
+            if (SetProperty(ref _opacity, clamped))
+            {
+                _note.Opacity = clamped;
+                OnPropertyChanged(nameof(BackgroundBrush));
+                ScheduleSave();
+            }
+        }
+    }
+
+    private bool _isLocked;
+    public bool IsLocked
+    {
+        get => _isLocked;
+        set
+        {
+            if (SetProperty(ref _isLocked, value))
+            {
+                _note.IsLocked = value;
+                ScheduleSave();
+            }
+        }
+    }
+
+    private DateTime _updatedAt;
+    public DateTime UpdatedAt
+    {
+        get => _updatedAt;
+        private set => SetProperty(ref _updatedAt, value);
+    }
+
+    // ---------- Derived brushes (bound from XAML) ----------
+
+    public SolidColorBrush BackgroundBrush => NotePalette.GetBackgroundBrush(Color, Opacity);
+    public SolidColorBrush ForegroundBrush => NotePalette.GetForegroundBrush(Color, FontColor);
+
+    public Guid NoteId => _note.Id;
+
+    // ---------- Commands ----------
+
+    public RelayCommand NewNoteCommand => new(_ => _windowManager.NewNote());
+
+    public RelayCommand CloseCommand => new(_ => _windowManager.CloseNote(_note.Id, delete: false));
+
+    public RelayCommand DeleteCommand => new(_ => _windowManager.CloseNote(_note.Id, delete: true));
+
+    public RelayCommand CycleColorCommand => new(_ => Color = NotePalette.Next(Color));
+
+    public RelayCommand CycleFontColorCommand => new(_ => FontColor = NotePalette.NextFontColor(FontColor));
+
+    public RelayCommand IncreaseFontCommand => new(_ => FontSize += 1);
+
+    public RelayCommand DecreaseFontCommand => new(_ => FontSize -= 1);
+
+    public RelayCommand ToggleLockCommand => new(_ => IsLocked = !IsLocked);
+
+    // ---------- Position & size write-back (called from window code-behind) ----------
+
+    public void UpdatePosition(double x, double y)
+    {
+        if (Math.Abs(_note.X - x) < 0.5 && Math.Abs(_note.Y - y) < 0.5) return;
+        _note.X = x;
+        _note.Y = y;
+        ScheduleSave();
+    }
+
+    public void UpdateSize(double width, double height)
+    {
+        if (Math.Abs(_note.Width - width) < 0.5 && Math.Abs(_note.Height - height) < 0.5) return;
+        _note.Width = width;
+        _note.Height = height;
+        ScheduleSave();
+    }
+
+    /// <summary>Flush any pending debounced save immediately (e.g., on app exit).</summary>
+    public void FlushSave()
+    {
+        if (_saveTimer.IsEnabled)
+        {
+            _saveTimer.Stop();
+            SaveNow();
+        }
+    }
+
+    // ---------- Debounced save ----------
+
+    private void ScheduleSave()
+    {
+        _saveTimer.Stop();
+        _saveTimer.Start();
+    }
+
+    private void OnSaveTimerTick(object? sender, EventArgs e)
+    {
+        _saveTimer.Stop();
+        SaveNow();
+    }
+
+    private void SaveNow()
+    {
+        _note.UpdatedAt = DateTime.Now;
+        UpdatedAt = _note.UpdatedAt;
+        SafeExec.Try(() => _noteService.Update(_note));
+    }
+}

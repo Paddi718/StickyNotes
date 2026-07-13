@@ -1,0 +1,43 @@
+# ====== .NET Build Output ======
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.vs/
+[Bb]in/
+[Oo]bj/
+
+# ====== NuGet ======
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/repositories.config
+*.nuget.props
+*.nuget.targets
+
+# ====== Visual Studio / Rider ======
+.vs/
+*.sln.DotSettings.user
+*.DotSettings.user
+_ReSharper.Caches/
+
+# ====== VS Code ======
+.vscode/
+*.code-workspace
+
+# ====== OS Files ======
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ====== Trae / Project-Specific ======
+.trae/
+
+# ====== Logs ======
+*.log
+crash*.txt

@@ -1,0 +1,174 @@
+<Window x:Class="StickyNotes.Views.NoteWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:StickyNotes.Converters"
+        Title="StickyNote"
+        Height="260" Width="260"
+        MinHeight="120" MinWidth="160"
+        AllowsTransparency="True"
+        WindowStyle="None"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        ResizeMode="CanResize"
+        SizeToContent="Manual"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextElement.FontFamily="Segoe UI">
+
+    <!-- Right-click context menu (for unlocking when controls are hidden).
+         DataContext is set to the Window's DataContext (NoteViewModel) so
+         the MenuItem can bind directly to ToggleLockCommand. -->
+    <Window.ContextMenu>
+        <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+            <MenuItem Header="锁定/解锁" Command="{Binding ToggleLockCommand}" />
+        </ContextMenu>
+    </Window.ContextMenu>
+
+    <Border CornerRadius="10"
+            Background="{Binding BackgroundBrush}"
+            BorderBrush="{StaticResource NoteBorderBrush}"
+            BorderThickness="1"
+            ClipToBounds="True">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0"
+                  Height="32"
+                  Background="Transparent"
+                  PreviewMouseLeftButtonDown="TitleBar_PreviewMouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBox Grid.Column="0"
+                         Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
+                         Foreground="{Binding ForegroundBrush}"
+                         FontSize="13"
+                         VerticalAlignment="Center"
+                         Margin="4,0,0,0"
+                         IsReadOnly="{Binding IsLocked}"
+                         ToolTip="便签标题">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource NoteTitleTextBox}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsLocked}" Value="True">
+                                    <Setter Property="ContextMenu" Value="{x:Null}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="0,0,4,0"
+                            Style="{StaticResource AutoHideElement}">
+                    <Button Style="{StaticResource NoteToolbarButton}"
+                            Content="&#x2795;"
+                            Command="{Binding NewNoteCommand}"
+                            ToolTip="新建便签" />
+                    <Button Style="{StaticResource NoteToolbarButton}"
+                            Content="&#x25D1;"
+                            Command="{Binding CycleColorCommand}"
+                            ToolTip="切换颜色" />
+                    <Button Style="{StaticResource NoteToolbarButton}"
+                            Content="&#x1F3A8;"
+                            Command="{Binding CycleFontColorCommand}"
+                            ToolTip="切换字体颜色" />
+                    <Button Style="{StaticResource NoteToolbarButton}"
+                            Content="A&#x2191;"
+                            Command="{Binding IncreaseFontCommand}"
+                            FontSize="11"
+                            ToolTip="放大字体" />
+                    <Button Style="{StaticResource NoteToolbarButton}"
+                            Content="A&#x2193;"
+                            Command="{Binding DecreaseFontCommand}"
+                            FontSize="11"
+                            ToolTip="缩小字体" />
+                    <Button Style="{StaticResource NoteToolbarButton}"
+                            Content="&#x1F512;"
+                            Command="{Binding ToggleLockCommand}"
+                            ToolTip="锁定便签" />
+                    <Button Style="{StaticResource NoteToolbarButton}"
+                            Content="&#x2716;"
+                            Command="{Binding DeleteCommand}"
+                            ToolTip="删除便签" />
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Style="{StaticResource LockedUnlockButton}"
+                        Content="&#x1F513;"
+                        Command="{Binding ToggleLockCommand}"
+                        ToolTip="解锁便签"
+                        VerticalAlignment="Center"
+                        Margin="0,0,4,0" />
+            </Grid>
+
+            <Rectangle Grid.Row="0"
+                       VerticalAlignment="Bottom"
+                       Height="1"
+                       Margin="8,0,8,0"
+                       Fill="{Binding ForegroundBrush}"
+                       Opacity="0.2"
+                       Style="{StaticResource AutoHideElement}" />
+
+            <TextBox Grid.Row="1"
+                     Text="{Binding Content, UpdateSourceTrigger=PropertyChanged}"
+                     Foreground="{Binding ForegroundBrush}"
+                     FontSize="{Binding FontSize}"
+                     Margin="4,2,4,2"
+                     IsReadOnly="{Binding IsLocked}"
+                     ToolTip="便签内容">
+                <TextBox.Style>
+                    <Style TargetType="TextBox" BasedOn="{StaticResource NoteBodyTextBox}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsLocked}" Value="True">
+                                <Setter Property="ContextMenu" Value="{x:Null}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBox.Style>
+            </TextBox>
+
+            <Grid Grid.Row="2"
+                  Margin="10,2,10,6"
+                  Style="{StaticResource AutoHideElement}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="透明"
+                           VerticalAlignment="Center"
+                           FontSize="10"
+                           Foreground="{Binding ForegroundBrush}"
+                           Opacity="0.6" />
+
+                <Slider Grid.Column="1"
+                        Value="{Binding Opacity}"
+                        Minimum="0.1" Maximum="1.0"
+                        TickFrequency="0.1"
+                        VerticalAlignment="Center"
+                        Margin="6,0,6,0"
+                        ToolTip="调整透明度"
+                        Foreground="{Binding ForegroundBrush}" />
+
+                <TextBlock Grid.Column="2"
+                           FontSize="10"
+                           Opacity="0.6"
+                           Foreground="{Binding ForegroundBrush}"
+                           VerticalAlignment="Center"
+                           Text="{Binding UpdatedAt, StringFormat='更新于 {0:MM-dd HH:mm}'}" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

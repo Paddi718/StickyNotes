@@ -1,0 +1,120 @@
+<Window x:Class="StickyNotes.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="clr-namespace:StickyNotes.Models"
+        Title="StickyNotes 设置"
+        Height="480" Width="400"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="#F5F5F5"
+        TextElement.FontFamily="Segoe UI">
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Title -->
+        <TextBlock Grid.Row="0"
+                   Text="便签设置"
+                   FontSize="18" FontWeight="SemiBold"
+                   Margin="0,0,0,12" />
+
+        <!-- Auto-start -->
+        <CheckBox Grid.Row="1"
+                  Style="{StaticResource SettingsCheckBox}"
+                  IsChecked="{Binding AutoStartWithWindows}"
+                  Content="开机自动启动" />
+
+        <!-- Primary mechanism: WM_WINDOWPOSCHANGING hook -->
+        <StackPanel Grid.Row="2" Margin="0,8,0,0">
+            <CheckBox Style="{StaticResource SettingsCheckBox}"
+                      IsChecked="{Binding EnableMethodA}"
+                      Content="主机制：拦截最小化请求（免疫 Win+D，推荐）" />
+            <TextBlock Margin="28,0,0,0"
+                       FontSize="11" Opacity="0.6"
+                       Text="通过 Win32 钩子在系统层面阻止 Win+D/Win+M 最小化便签，无闪烁。" />
+        </StackPanel>
+
+        <!-- Method B -->
+        <StackPanel Grid.Row="3" Margin="0,8,0,0">
+            <CheckBox Style="{StaticResource SettingsCheckBox}"
+                      IsChecked="{Binding EnableMethodB}"
+                      Content="方案 B：最小化时自动还原（兜底保护）" />
+            <TextBlock Margin="28,0,0,0"
+                       FontSize="11" Opacity="0.6"
+                       Text="若主机制遗漏，检测到最小化后立即还原便签。" />
+        </StackPanel>
+
+        <!-- Mount target (hidden — no longer used since SetParent was replaced
+             with WM_WINDOWPOSCHANGING hook. Kept for settings compatibility.) -->
+        <StackPanel Grid.Row="4" Margin="0,12,0,0" Visibility="Collapsed">
+            <TextBlock Text="便签显示层级：" FontWeight="SemiBold" />
+            <ComboBox Margin="0,4,0,0"
+                      SelectedIndex="{Binding MountTarget, Converter={StaticResource EnumToIndexConverter}}"
+                      ToolTip="WorkerW: 显示在桌面图标之上；Progman: 显示在图标之下">
+                <ComboBoxItem Content="WorkerW（桌面图标之上，推荐）" />
+                <ComboBoxItem Content="Progman（桌面图标之下）" />
+            </ComboBox>
+        </StackPanel>
+
+        <!-- Default color -->
+        <StackPanel Grid.Row="5" Margin="0,12,0,0">
+            <TextBlock Text="新建便签默认颜色：" FontWeight="SemiBold" />
+            <ComboBox Margin="0,4,0,0"
+                      SelectedIndex="{Binding DefaultColor, Converter={StaticResource EnumToIndexConverter}}">
+                <ComboBoxItem Content="黄色" />
+                <ComboBoxItem Content="粉色" />
+                <ComboBoxItem Content="绿色" />
+                <ComboBoxItem Content="蓝色" />
+                <ComboBoxItem Content="紫色" />
+                <ComboBoxItem Content="橙色" />
+                <ComboBoxItem Content="白色" />
+                <ComboBoxItem Content="深色" />
+            </ComboBox>
+        </StackPanel>
+
+        <!-- Default size -->
+        <StackPanel Grid.Row="6" Margin="0,12,0,0">
+            <TextBlock Text="新建便签默认尺寸：" FontWeight="SemiBold" />
+            <Grid Margin="0,4,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="80" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="宽度：" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <TextBox Grid.Column="1" Text="{Binding DefaultWidth, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Grid.Column="2" Text="高度：" VerticalAlignment="Center" Margin="12,0,6,0" />
+                <TextBox Grid.Column="3" Text="{Binding DefaultHeight, UpdateSourceTrigger=PropertyChanged}" />
+            </Grid>
+        </StackPanel>
+
+        <!-- Default font size -->
+        <StackPanel Grid.Row="7" Margin="0,12,0,0" VerticalAlignment="Top">
+            <TextBlock Text="默认字体大小：" FontWeight="SemiBold" />
+            <Slider Margin="0,4,0,0"
+                    Minimum="10" Maximum="24"
+                    TickFrequency="1" IsSnapToTickEnabled="True"
+                    Value="{Binding DefaultFontSize}"
+                    AutoToolTipPlacement="TopLeft" />
+        </StackPanel>
+
+        <!-- Save button -->
+        <Button Grid.Row="8"
+                Style="{StaticResource SettingsButton}"
+                Content="保存设置"
+                Command="{Binding SaveCommand}"
+                HorizontalAlignment="Right"
+                Margin="0,16,0,0" />
+    </Grid>
+</Window>
