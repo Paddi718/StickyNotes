@@ -41,14 +41,14 @@ public partial class NoteWindow : Window
     /// <summary>
     /// HWND has just been created but not yet shown — the right moment to
     /// apply Win32 attributes: WS_EX_TOOLWINDOW (Alt+Tab hiding),
-    /// accent policy (acrylic blur), rounded corners.
+    /// accent-policy acrylic blur, and rounded corners.
     ///
-    /// Acrylic approach: SetWindowCompositionAttribute with
-    /// ACCENT_ENABLE_ACRYLICBLURBEHIND. Requires WS_EX_LAYERED, which WPF
-    /// sets automatically when AllowsTransparency="True". The previous
-    /// approach (AllowsTransparency="False" + manual WS_EX_LAYERED) failed
-    /// because WPF's HwndSource strips WS_EX_LAYERED from SetWindowLongW
-    /// calls when AllowsTransparency is False.
+    /// Uses SetWindowCompositionAttribute with ACCENT_ENABLE_ACRYLICBLURBEHIND
+    /// and a fixed BLUR_TINT_ALPHA (decoupled from note opacity). The XAML
+    /// BackgroundBrush still binds to the opacity slider for content tinting,
+    /// so the user gets independent control of:
+    ///   - Blur visibility (always on, fixed alpha)
+    ///   - Content opacity (slider)
     ///
     /// Win+D immunity is preserved by the WM_WINDOWPOSCHANGING hook in
     /// DesktopPinService, which blocks minimization at the Win32 level.
@@ -61,7 +61,6 @@ public partial class NoteWindow : Window
         if (_hwnd == IntPtr.Zero) return;
 
         // Add WS_EX_TOOLWINDOW (hide from Alt+Tab).
-        // WS_EX_LAYERED is set automatically by WPF (AllowsTransparency="True").
         SafeExec.Try(() =>
         {
             var ex = Win32.GetWindowExStyle(_hwnd);
@@ -70,7 +69,7 @@ public partial class NoteWindow : Window
                 Win32.SetWindowExStyle(_hwnd, target);
         });
 
-        // Apply acrylic blur with the note's color as tint.
+        // Apply acrylic blur with fixed tint alpha (decoupled from note opacity).
         UpdateAcrylicTint();
 
         // Hook WM_ERASEBKGND (prevent default background fill) and
@@ -99,14 +98,15 @@ public partial class NoteWindow : Window
     }
 
     /// <summary>
-    /// Applies or updates the acrylic blur tint behind the window.
-    /// Called on init and whenever the note's Opacity or Color changes.
+    /// Applies ACCENT_ENABLE_BLURBEHIND (pure blur, NO color tint) via
+    /// SetWindowCompositionAttribute.
     ///
-    /// The accent color is 0xAABBGGRR where:
-    ///   AA = opacity * 255 (controls tint darkness + blur visibility)
-    ///   BB/GG/RR = the note's base color
-    /// Lower alpha = more blur visible, lighter tint (more frosted).
-    /// Higher alpha = less blur, stronger tint (more solid).
+    /// Unlike ACCENT_ENABLE_ACRYLICBLURBEHIND which applies a colored overlay,
+    /// pure blur leaves all color/opacity control to the XAML BackgroundBrush
+    /// (bound to the slider). This means:
+    ///   - Blur is always on (frosted glass base)
+    ///   - Color and opacity are fully controlled by the XAML layer
+    ///   - The opacity slider has a direct, visible effect
     /// </summary>
     private void UpdateAcrylicTint()
     {
@@ -114,17 +114,11 @@ public partial class NoteWindow : Window
 
         SafeExec.Try(() =>
         {
-            var baseBrush = NotePalette.GetBackgroundBrush(_viewModel.Color);
-            var c = baseBrush.Color;
-            var alpha = (byte)Math.Clamp((int)(255 * _viewModel.Opacity), 1, 255);
-            // Accent color format: 0xAABBGGRR
-            var accentColor = ((uint)alpha << 24) | ((uint)c.B << 16) | ((uint)c.G << 8) | (uint)c.R;
-
             var accent = new Win32.ACCENTPOLICY
             {
-                nAccentState = WindowConstants.ACCENT_ENABLE_ACRYLICBLURBEHIND,
+                nAccentState = WindowConstants.ACCENT_ENABLE_BLURBEHIND,
                 nFlags = 0,
-                nColor = accentColor,
+                nColor = 0,       // No tint — XAML handles all color
                 nAnimationId = 0
             };
 

@@ -1,40 +1,48 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- ===== Note color palettes ===== -->
-    <Color x:Key="NoteYellowColor">#FFFFF9C4</Color>
-    <Color x:Key="NotePinkColor">#FFFFCDD2</Color>
+    <!-- ===== Note color palettes (modern Win11 pastels) ===== -->
+    <Color x:Key="NoteYellowColor">#FFFFF3B0</Color>
+    <Color x:Key="NotePinkColor">#FFF8BBD0</Color>
     <Color x:Key="NoteGreenColor">#FFC8E6C9</Color>
-    <Color x:Key="NoteBlueColor">#FFBBDEFB</Color>
+    <Color x:Key="NoteBlueColor">#FFB3E5FC</Color>
     <Color x:Key="NotePurpleColor">#FFE1BEE7</Color>
-    <Color x:Key="NoteOrangeColor">#FFFFE0B2</Color>
-    <Color x:Key="NoteWhiteColor">#FFFFFFFF</Color>
+    <Color x:Key="NoteOrangeColor">#FFFFD8A8</Color>
+    <Color x:Key="NoteWhiteColor">#FFF5F5F5</Color>
     <Color x:Key="NoteDarkColor">#FF2D2D30</Color>
 
     <!-- ===== Note backgrounds ===== -->
-    <SolidColorBrush x:Key="NoteYellowBrush" Color="#FFFFF9C4" />
-    <SolidColorBrush x:Key="NotePinkBrush" Color="#FFFFCDD2" />
+    <SolidColorBrush x:Key="NoteYellowBrush" Color="#FFFFF3B0" />
+    <SolidColorBrush x:Key="NotePinkBrush" Color="#FFF8BBD0" />
     <SolidColorBrush x:Key="NoteGreenBrush" Color="#FFC8E6C9" />
-    <SolidColorBrush x:Key="NoteBlueBrush" Color="#FFBBDEFB" />
+    <SolidColorBrush x:Key="NoteBlueBrush" Color="#FFB3E5FC" />
     <SolidColorBrush x:Key="NotePurpleBrush" Color="#FFE1BEE7" />
-    <SolidColorBrush x:Key="NoteOrangeBrush" Color="#FFFFE0B2" />
-    <SolidColorBrush x:Key="NoteWhiteBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="NoteOrangeBrush" Color="#FFFFD8A8" />
+    <SolidColorBrush x:Key="NoteWhiteBrush" Color="#FFF5F5F5" />
     <SolidColorBrush x:Key="NoteDarkBrush" Color="#FF2D2D30" />
 
-    <!-- ===== Foreground text brushes ===== -->
-    <SolidColorBrush x:Key="NoteYellowForeground" Color="#FF5D4037" />
-    <SolidColorBrush x:Key="NotePinkForeground" Color="#FF5D4037" />
+    <!-- ===== Foreground text brushes (enhanced contrast for glass readability) ===== -->
+    <SolidColorBrush x:Key="NoteYellowForeground" Color="#FF4E342E" />
+    <SolidColorBrush x:Key="NotePinkForeground" Color="#FF4E342E" />
     <SolidColorBrush x:Key="NoteGreenForeground" Color="#FF1B5E20" />
     <SolidColorBrush x:Key="NoteBlueForeground" Color="#FF0D47A1" />
     <SolidColorBrush x:Key="NotePurpleForeground" Color="#FF4A148C" />
-    <SolidColorBrush x:Key="NoteOrangeForeground" Color="#FF5D4037" />
+    <SolidColorBrush x:Key="NoteOrangeForeground" Color="#FF4E342E" />
     <SolidColorBrush x:Key="NoteWhiteForeground" Color="#FF424242" />
     <SolidColorBrush x:Key="NoteDarkForeground" Color="#FFFFFFFF" />
 
+    <!-- ===== Glass effect brushes ===== -->
+    <SolidColorBrush x:Key="GlassBorderBrush" Color="#40FFFFFF" />
+    <SolidColorBrush x:Key="GlassBorderDarkBrush" Color="#30FFFFFF" />
+    <SolidColorBrush x:Key="GlassHighlightBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="NoteSeparatorBrush" Color="#20FFFFFF" />
+
     <!-- ===== Accent & shared brushes ===== -->
     <SolidColorBrush x:Key="NoteAccentBrush" Color="#FF0078D4" />
-    <SolidColorBrush x:Key="NoteBorderBrush" Color="#66000000" />
-    <SolidColorBrush x:Key="NoteToolbarButtonHoverBrush" Color="#33000000" />
-    <SolidColorBrush x:Key="NoteToolbarButtonPressedBrush" Color="#4D000000" />
+    <SolidColorBrush x:Key="NoteBorderBrush" Color="#30000000" />
+    <SolidColorBrush x:Key="NoteToolbarButtonHoverBrush" Color="#20FFFFFF" />
+    <SolidColorBrush x:Key="NoteToolbarButtonPressedBrush" Color="#35FFFFFF" />
+    <SolidColorBrush x:Key="NoteToolbarButtonDarkHoverBrush" Color="#20FFFFFF" />
+    <SolidColorBrush x:Key="NoteToolbarButtonDarkPressedBrush" Color="#35FFFFFF" />
 
 </ResourceDictionary>

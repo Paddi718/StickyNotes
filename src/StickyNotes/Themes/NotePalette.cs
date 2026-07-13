@@ -14,15 +14,15 @@ public static class NotePalette
 {
     public static SolidColorBrush GetBackgroundBrush(NoteColor color) => color switch
     {
-        NoteColor.Yellow => CreateFrozen("#FFFFF9C4"),
-        NoteColor.Pink   => CreateFrozen("#FFFFCDD2"),
+        NoteColor.Yellow => CreateFrozen("#FFFFF3B0"),
+        NoteColor.Pink   => CreateFrozen("#FFF8BBD0"),
         NoteColor.Green  => CreateFrozen("#FFC8E6C9"),
-        NoteColor.Blue   => CreateFrozen("#FFBBDEFB"),
+        NoteColor.Blue   => CreateFrozen("#FFB3E5FC"),
         NoteColor.Purple => CreateFrozen("#FFE1BEE7"),
-        NoteColor.Orange => CreateFrozen("#FFFFE0B2"),
-        NoteColor.White  => CreateFrozen("#FFFFFFFF"),
+        NoteColor.Orange => CreateFrozen("#FFFFD8A8"),
+        NoteColor.White  => CreateFrozen("#FFF5F5F5"),
         NoteColor.Dark   => CreateFrozen("#FF2D2D30"),
-        _                => CreateFrozen("#FFFFF9C4")
+        _                => CreateFrozen("#FFFFF3B0")
     };
 
     /// <summary>
@@ -41,15 +41,15 @@ public static class NotePalette
 
     public static SolidColorBrush GetForegroundBrush(NoteColor color) => color switch
     {
-        NoteColor.Yellow => CreateFrozen("#FF5D4037"),
-        NoteColor.Pink   => CreateFrozen("#FF5D4037"),
+        NoteColor.Yellow => CreateFrozen("#FF4E342E"),
+        NoteColor.Pink   => CreateFrozen("#FF4E342E"),
         NoteColor.Green  => CreateFrozen("#FF1B5E20"),
         NoteColor.Blue   => CreateFrozen("#FF0D47A1"),
         NoteColor.Purple => CreateFrozen("#FF4A148C"),
-        NoteColor.Orange => CreateFrozen("#FF5D4037"),
+        NoteColor.Orange => CreateFrozen("#FF4E342E"),
         NoteColor.White  => CreateFrozen("#FF424242"),
         NoteColor.Dark   => CreateFrozen("#FFFFFFFF"),
-        _                => CreateFrozen("#FF5D4037")
+        _                => CreateFrozen("#FF4E342E")
     };
 
     /// <summary>

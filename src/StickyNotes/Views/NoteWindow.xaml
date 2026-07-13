@@ -4,7 +4,7 @@
         xmlns:converters="clr-namespace:StickyNotes.Converters"
         Title="StickyNote"
         Height="260" Width="260"
-        MinHeight="120" MinWidth="160"
+        MinHeight="120" MinWidth="180"
         AllowsTransparency="True"
         WindowStyle="None"
         Background="Transparent"
@@ -13,32 +13,37 @@
         SizeToContent="Manual"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
-        TextElement.FontFamily="Segoe UI">
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        RenderOptions.ClearTypeHint="Enabled"
+        TextElement.FontFamily="Segoe UI Variable, Segoe UI"
+        TextElement.FontSize="14">
 
-    <!-- Right-click context menu (for unlocking when controls are hidden).
-         DataContext is set to the Window's DataContext (NoteViewModel) so
-         the MenuItem can bind directly to ToggleLockCommand. -->
+    <!-- Right-click context menu (for unlocking when controls are hidden) -->
     <Window.ContextMenu>
         <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
             <MenuItem Header="锁定/解锁" Command="{Binding ToggleLockCommand}" />
         </ContextMenu>
     </Window.ContextMenu>
 
-    <Border CornerRadius="10"
+    <!-- Glass card: frosted background with subtle border -->
+    <Border CornerRadius="12"
             Background="{Binding BackgroundBrush}"
-            BorderBrush="{StaticResource NoteBorderBrush}"
+            BorderBrush="{StaticResource GlassBorderBrush}"
             BorderThickness="1"
             ClipToBounds="True">
 
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
+            <!-- Title bar with toolbar -->
             <Grid Grid.Row="0"
-                  Height="32"
+                  Height="36"
                   Background="Transparent"
                   PreviewMouseLeftButtonDown="TitleBar_PreviewMouseLeftButtonDown">
                 <Grid.ColumnDefinitions>
@@ -49,9 +54,10 @@
                 <TextBox Grid.Column="0"
                          Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
                          Foreground="{Binding ForegroundBrush}"
-                         FontSize="13"
+                         FontSize="14"
+                         FontWeight="SemiBold"
                          VerticalAlignment="Center"
-                         Margin="4,0,0,0"
+                         Margin="6,0,0,0"
                          IsReadOnly="{Binding IsLocked}"
                          ToolTip="便签标题">
                     <TextBox.Style>
@@ -65,61 +71,65 @@
                     </TextBox.Style>
                 </TextBox>
 
+                <!-- Toolbar (visible on hover, hidden when locked) -->
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
                             Margin="0,0,4,0"
                             Style="{StaticResource AutoHideElement}">
                     <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="&#x2795;"
+                            Content="+"
                             Command="{Binding NewNoteCommand}"
                             ToolTip="新建便签" />
                     <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="&#x25D1;"
+                            Content="🎨"
                             Command="{Binding CycleColorCommand}"
                             ToolTip="切换颜色" />
                     <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="&#x1F3A8;"
+                            Content="A"
+                            Foreground="{Binding ForegroundBrush}"
                             Command="{Binding CycleFontColorCommand}"
+                            FontSize="12"
                             ToolTip="切换字体颜色" />
                     <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="A&#x2191;"
+                            Content="A⁺"
                             Command="{Binding IncreaseFontCommand}"
                             FontSize="11"
                             ToolTip="放大字体" />
                     <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="A&#x2193;"
+                            Content="A⁻"
                             Command="{Binding DecreaseFontCommand}"
                             FontSize="11"
                             ToolTip="缩小字体" />
                     <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="&#x1F512;"
+                            Content="🔒"
                             Command="{Binding ToggleLockCommand}"
                             ToolTip="锁定便签" />
                     <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="&#x2716;"
+                            Content="✕"
                             Command="{Binding DeleteCommand}"
                             ToolTip="删除便签" />
                 </StackPanel>
 
+                <!-- Unlock button (visible on hover when locked) -->
                 <Button Grid.Column="1"
+                        Content="🔓"
                         Style="{StaticResource LockedUnlockButton}"
-                        Content="&#x1F513;"
                         Command="{Binding ToggleLockCommand}"
                         ToolTip="解锁便签"
                         VerticalAlignment="Center"
-                        Margin="0,0,4,0" />
+                        Margin="0,0,6,0" />
             </Grid>
 
-            <Rectangle Grid.Row="0"
-                       VerticalAlignment="Bottom"
+            <!-- Separator line (hidden when locked) -->
+            <Rectangle Grid.Row="1"
                        Height="1"
-                       Margin="8,0,8,0"
-                       Fill="{Binding ForegroundBrush}"
-                       Opacity="0.2"
+                       Margin="12,0,12,0"
+                       Fill="{StaticResource NoteSeparatorBrush}"
                        Style="{StaticResource AutoHideElement}" />
 
-            <TextBox Grid.Row="1"
+            <!-- Note content -->
+            <TextBox Grid.Row="2"
                      Text="{Binding Content, UpdateSourceTrigger=PropertyChanged}"
                      Foreground="{Binding ForegroundBrush}"
                      FontSize="{Binding FontSize}"
@@ -137,37 +147,29 @@
                 </TextBox.Style>
             </TextBox>
 
-            <Grid Grid.Row="2"
-                  Margin="10,2,10,6"
+            <!-- Footer with opacity slider -->
+            <Grid Grid.Row="3"
+                  Margin="12,2,12,8"
                   Style="{StaticResource AutoHideElement}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0"
-                           Text="透明"
+                           Text="◐"
                            VerticalAlignment="Center"
-                           FontSize="10"
+                           FontSize="12"
                            Foreground="{Binding ForegroundBrush}"
-                           Opacity="0.6" />
+                           Opacity="0.45"
+                           Margin="0,0,8,0" />
 
                 <Slider Grid.Column="1"
                         Value="{Binding Opacity}"
                         Minimum="0.1" Maximum="1.0"
-                        TickFrequency="0.1"
                         VerticalAlignment="Center"
-                        Margin="6,0,6,0"
                         ToolTip="调整透明度"
-                        Foreground="{Binding ForegroundBrush}" />
-
-                <TextBlock Grid.Column="2"
-                           FontSize="10"
-                           Opacity="0.6"
-                           Foreground="{Binding ForegroundBrush}"
-                           VerticalAlignment="Center"
-                           Text="{Binding UpdatedAt, StringFormat='更新于 {0:MM-dd HH:mm}'}" />
+                        Style="{StaticResource GlassSlider}" />
             </Grid>
         </Grid>
     </Border>
