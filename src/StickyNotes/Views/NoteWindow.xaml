@@ -27,8 +27,9 @@
     </Window.ContextMenu>
 
     <!-- Glass card: frosted background with subtle border -->
-    <Border CornerRadius="12"
-            Background="{Binding BackgroundBrush}"
+    <Border x:Name="GlassBorder"
+            CornerRadius="12"
+            Background="#01FFFFFF"
             BorderBrush="{StaticResource GlassBorderBrush}"
             BorderThickness="1"
             ClipToBounds="True">

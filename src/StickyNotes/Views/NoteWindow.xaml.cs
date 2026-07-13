@@ -98,52 +98,95 @@ public partial class NoteWindow : Window
     }
 
     /// <summary>
-    /// Applies ACCENT_ENABLE_BLURBEHIND (pure blur, NO color tint) via
-    /// SetWindowCompositionAttribute.
-    ///
-    /// Unlike ACCENT_ENABLE_ACRYLICBLURBEHIND which applies a colored overlay,
-    /// pure blur leaves all color/opacity control to the XAML BackgroundBrush
-    /// (bound to the slider). This means:
-    ///   - Blur is always on (frosted glass base)
-    ///   - Color and opacity are fully controlled by the XAML layer
-    ///   - The opacity slider has a direct, visible effect
+    /// Drives all visual layers from the opacity slider:
+    ///   slider ≤ 0.11 → ACCENT_DISABLED, no border, no rounded corners, fully transparent
+    ///   slider > 0.11 → ACCENT_ENABLE_ACRYLICBLURBEHIND with progressive alpha,
+    ///                     glass border, rounded corners
     /// </summary>
     private void UpdateAcrylicTint()
     {
         if (_hwnd == IntPtr.Zero) return;
 
+        var opacity = _viewModel.Opacity;
+        var isTransparent = opacity <= 0.11;
+
+        Dispatcher.Invoke(() =>
+        {
+            if (isTransparent)
+            {
+                // Kill all visuals that could create layered-window edge artifacts
+                GlassBorder.CornerRadius = new CornerRadius(0);
+                GlassBorder.ClipToBounds = false;
+                GlassBorder.BorderThickness = new Thickness(0);
+                GlassBorder.BorderBrush = null;
+                GlassBorder.Background = new SolidColorBrush(
+                    System.Windows.Media.Color.FromArgb(1, 255, 255, 255));
+            }
+            else
+            {
+                // Restore frosted-glass card look
+                GlassBorder.CornerRadius = new CornerRadius(12);
+                GlassBorder.ClipToBounds = true;
+                GlassBorder.BorderThickness = new Thickness(1);
+                GlassBorder.BorderBrush = (System.Windows.Media.Brush)FindResource("GlassBorderBrush");
+                GlassBorder.Background = new SolidColorBrush(
+                    System.Windows.Media.Color.FromArgb(1, 255, 255, 255));
+            }
+        });
+
         SafeExec.Try(() =>
         {
+            if (isTransparent)
+            {
+                // Fully transparent: no blur, no DWM corners
+                var off = new Win32.ACCENTPOLICY
+                {
+                    nAccentState = WindowConstants.ACCENT_DISABLED,
+                    nFlags = 0, nColor = 0, nAnimationId = 0
+                };
+                var d = new Win32.WINCOMPATTRDATA
+                {
+                    nAttribute = WindowConstants.WCA_ACCENT_POLICY,
+                    pvData = Marshal.AllocHGlobal(Marshal.SizeOf<Win32.ACCENTPOLICY>()),
+                    cbData = Marshal.SizeOf<Win32.ACCENTPOLICY>()
+                };
+                try { Marshal.StructureToPtr(off, d.pvData, false); Win32.SetWindowCompositionAttribute(_hwnd, ref d); }
+                finally { Marshal.FreeHGlobal(d.pvData); }
+
+                int noRound = WindowConstants.DWMWCP_DONOTROUND;
+                Win32.DwmSetWindowAttribute(_hwnd, WindowConstants.DWMWA_WINDOW_CORNER_PREFERENCE, ref noRound, sizeof(int));
+                return;
+            }
+
+            // Frosted glass: enable acrylic + round corners
+            int round = WindowConstants.DWMWCP_ROUND;
+            Win32.DwmSetWindowAttribute(_hwnd, WindowConstants.DWMWA_WINDOW_CORNER_PREFERENCE, ref round, sizeof(int));
+
+            var baseBrush = NotePalette.GetBackgroundBrush(_viewModel.Color);
+            var c = baseBrush.Color;
+            var alpha = (byte)(0x20 + (opacity - 0.15) / 0.85 * 0x60);
+            var accentColor = ((uint)alpha << 24) | ((uint)c.B << 16) | ((uint)c.G << 8) | (uint)c.R;
+
             var accent = new Win32.ACCENTPOLICY
             {
-                nAccentState = WindowConstants.ACCENT_ENABLE_BLURBEHIND,
+                nAccentState = WindowConstants.ACCENT_ENABLE_ACRYLICBLURBEHIND,
                 nFlags = 0,
-                nColor = 0,       // No tint — XAML handles all color
+                nColor = accentColor,
                 nAnimationId = 0
             };
-
             var data = new Win32.WINCOMPATTRDATA
             {
                 nAttribute = WindowConstants.WCA_ACCENT_POLICY,
                 pvData = Marshal.AllocHGlobal(Marshal.SizeOf<Win32.ACCENTPOLICY>()),
                 cbData = Marshal.SizeOf<Win32.ACCENTPOLICY>()
             };
-
-            try
-            {
-                Marshal.StructureToPtr(accent, data.pvData, false);
-                Win32.SetWindowCompositionAttribute(_hwnd, ref data);
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(data.pvData);
-            }
+            try { Marshal.StructureToPtr(accent, data.pvData, false); Win32.SetWindowCompositionAttribute(_hwnd, ref data); }
+            finally { Marshal.FreeHGlobal(data.pvData); }
         }, nameof(UpdateAcrylicTint));
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        // Re-apply the acrylic tint when the note's color or opacity changes.
         if (e.PropertyName is nameof(NoteViewModel.Opacity) or nameof(NoteViewModel.Color))
         {
             UpdateAcrylicTint();
