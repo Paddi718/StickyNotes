@@ -4,7 +4,7 @@
         xmlns:converters="clr-namespace:StickyNotes.Converters"
         Title="StickyNote"
         Height="260" Width="260"
-        MinHeight="120" MinWidth="180"
+        MinHeight="100" MinWidth="180"
         AllowsTransparency="True"
         WindowStyle="None"
         Background="Transparent"
@@ -19,20 +19,20 @@
         TextElement.FontFamily="LXGW WenKai, Segoe UI Variable, Segoe UI"
         TextElement.FontSize="16">
 
-    <!-- Right-click context menu (for unlocking when controls are hidden) -->
     <Window.ContextMenu>
         <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
             <MenuItem Header="锁定/解锁" Command="{Binding ToggleLockCommand}" />
         </ContextMenu>
     </Window.ContextMenu>
 
-    <!-- Glass card: frosted background with subtle border -->
+    <Grid>
     <Border x:Name="GlassBorder"
             CornerRadius="12"
             Background="#01FFFFFF"
             BorderBrush="{StaticResource GlassBorderBrush}"
             BorderThickness="1"
-            ClipToBounds="True">
+            ClipToBounds="True"
+            PreviewMouseLeftButtonDown="TopBar_PreviewMouseLeftButtonDown">
 
         <Grid>
             <Grid.RowDefinitions>
@@ -42,91 +42,63 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Title bar with toolbar -->
+            <!-- Top bar: all function buttons (no title text) -->
             <Grid Grid.Row="0"
-                  Height="36"
-                  Background="Transparent"
-                  PreviewMouseLeftButtonDown="TitleBar_PreviewMouseLeftButtonDown">
+                  Height="34"
+                  Background="Transparent">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <TextBox Grid.Column="0"
-                         Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
-                         Foreground="{Binding ForegroundBrush}"
-                         FontSize="16"
-                         FontWeight="SemiBold"
-                         VerticalAlignment="Center"
-                         Margin="6,0,0,0"
-                         IsReadOnly="{Binding IsLocked}"
-                         ToolTip="便签标题">
-                    <TextBox.Style>
-                        <Style TargetType="TextBox" BasedOn="{StaticResource NoteTitleTextBox}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsLocked}" Value="True">
-                                    <Setter Property="ContextMenu" Value="{x:Null}" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBox.Style>
-                </TextBox>
+                <!-- Drag handle (invisible, fills left side) -->
 
-                <!-- Toolbar (visible on hover, hidden when locked) -->
+                <!-- All buttons -->
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
                             Margin="0,0,4,0"
                             Style="{StaticResource AutoHideElement}">
                     <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="+"
-                            Command="{Binding NewNoteCommand}"
+                            Content="+" Command="{Binding NewNoteCommand}"
                             ToolTip="新建便签" />
                     <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="🎨"
-                            Command="{Binding CycleColorCommand}"
+                            Content="🎨" Command="{Binding CycleColorCommand}"
                             ToolTip="切换颜色" />
+                    <Button Style="{StaticResource NoteToolbarButton}"
+                            Content="☑" Click="TodoToggle_Click"
+                            ToolTip="切换待办 (Ctrl+D)" />
                     <Button Style="{StaticResource NoteToolbarButton}"
                             Content="A"
                             Foreground="{Binding ForegroundBrush}"
                             Command="{Binding CycleFontColorCommand}"
-                            FontSize="12"
-                            ToolTip="切换字体颜色" />
+                            FontSize="11" ToolTip="字体颜色" />
+                    <!-- Font size: button toggles popup slider -->
+                    <Button x:Name="FontSizeBtn"
+                            Style="{StaticResource NoteToolbarButton}"
+                            Content="Aˢ"
+                            FontSize="10" ToolTip="字体大小"
+                            Click="FontSizeBtn_Click" />
+                    <!-- Line spacing: button toggles popup slider -->
+                    <Button x:Name="LineSpacingBtn"
+                            Style="{StaticResource NoteToolbarButton}"
+                            Content="↕ˢ"
+                            FontSize="10" ToolTip="行间距"
+                            Click="LineSpacingBtn_Click" />
+                    <!-- Clear completed todos -->
                     <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="A⁺"
-                            Command="{Binding IncreaseFontCommand}"
-                            FontSize="11"
-                            ToolTip="放大字体" />
+                            Content="🗑"
+                            FontSize="11" ToolTip="清除已完成"
+                            Click="ClearCompleted_Click" />
                     <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="A⁻"
-                            Command="{Binding DecreaseFontCommand}"
-                            FontSize="11"
-                            ToolTip="缩小字体" />
-                    <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="↕⁺"
-                            Command="{Binding IncreaseLineSpacingCommand}"
-                            FontSize="11"
-                            ToolTip="增加行间距" />
-                    <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="↕⁻"
-                            Command="{Binding DecreaseLineSpacingCommand}"
-                            FontSize="11"
-                            ToolTip="减少行间距" />
-                    <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="☑"
-                            Click="TodoToggle_Click"
-                            ToolTip="切换待办 (Ctrl+D)" />
-                    <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="🔒"
-                            Command="{Binding ToggleLockCommand}"
+                            Content="🔒" Command="{Binding ToggleLockCommand}"
                             ToolTip="锁定便签" />
                     <Button Style="{StaticResource NoteToolbarButton}"
-                            Content="✕"
-                            Command="{Binding DeleteCommand}"
+                            Content="✕" Command="{Binding DeleteCommand}"
                             ToolTip="删除便签" />
                 </StackPanel>
 
-                <!-- Unlock button (visible on hover when locked) -->
+                <!-- Unlock button (locked mode) -->
                 <Button Grid.Column="1"
                         Content="🔓"
                         Style="{StaticResource LockedUnlockButton}"
@@ -136,24 +108,24 @@
                         Margin="0,0,6,0" />
             </Grid>
 
-            <!-- Separator line (hidden when locked) -->
+            <!-- Separator -->
             <Rectangle Grid.Row="1"
                        Height="1"
                        Margin="12,0,12,0"
                        Fill="{StaticResource NoteSeparatorBrush}"
                        Style="{StaticResource AutoHideElement}" />
 
-            <!-- Content TextBox: ☐/☑ glyphs via converter, click to toggle -->
+            <!-- Content -->
             <TextBox x:Name="ContentBox"
                      Grid.Row="2"
                      Text="{Binding Content, UpdateSourceTrigger=PropertyChanged}"
                      Foreground="{Binding ForegroundBrush}"
                      FontSize="{Binding FontSize}"
-                     Margin="4,2,4,2"
+                     Margin="6,2,6,4"
                      IsReadOnly="{Binding IsLocked}"
                      PreviewKeyDown="ContentBox_PreviewKeyDown"
                      PreviewMouseLeftButtonDown="ContentBox_PreviewMouseLeftButtonDown"
-                     ToolTip="便签内容&#x0a;点击 ☐/☑ 或 Ctrl+D 切换待办状态">
+                     PreviewMouseMove="ContentBox_PreviewMouseMove">
                 <TextBox.Style>
                     <Style TargetType="TextBox" BasedOn="{StaticResource NoteBodyTextBox}">
                         <Style.Triggers>
@@ -165,9 +137,10 @@
                 </TextBox.Style>
             </TextBox>
 
-            <!-- Footer with opacity slider -->
+            <!-- Footer: opacity slider only -->
             <Grid Grid.Row="3"
-                  Margin="12,2,12,8"
+                  Height="34"
+                  Margin="10,0,10,6"
                   Style="{StaticResource AutoHideElement}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -186,9 +159,41 @@
                         Value="{Binding Opacity}"
                         Minimum="0.1" Maximum="1.0"
                         VerticalAlignment="Center"
-                        ToolTip="调整透明度"
                         Style="{StaticResource GlassSlider}" />
             </Grid>
         </Grid>
     </Border>
+
+    <!-- Font size popup -->
+    <Popup x:Name="FontSizePopup"
+           PlacementTarget="{Binding ElementName=FontSizeBtn}"
+           Placement="Bottom" StaysOpen="True"
+           AllowsTransparency="True" PopupAnimation="Fade">
+        <Border Background="#E02D2D30" CornerRadius="8" Padding="6,4" BorderThickness="0"
+                MouseLeave="PopupContent_MouseLeave">
+            <StackPanel Width="120">
+                <TextBlock Text="{Binding FontSize, StringFormat='字体: {0:F0}px'}"
+                           Foreground="White" FontSize="11" Margin="0,0,0,4" />
+                <Slider Value="{Binding FontSize}" Minimum="10" Maximum="36"
+                        Style="{StaticResource GlassSlider}" />
+            </StackPanel>
+        </Border>
+    </Popup>
+
+    <!-- Line spacing popup -->
+    <Popup x:Name="LineSpacingPopup"
+           PlacementTarget="{Binding ElementName=LineSpacingBtn}"
+           Placement="Bottom" StaysOpen="True"
+           AllowsTransparency="True" PopupAnimation="Fade">
+        <Border Background="#E02D2D30" CornerRadius="8" Padding="6,4" BorderThickness="0"
+                MouseLeave="PopupContent_MouseLeave">
+            <StackPanel Width="120">
+                <TextBlock Text="{Binding LineSpacing, StringFormat='行距: {0:F2}x'}"
+                           Foreground="White" FontSize="11" Margin="0,0,0,4" />
+                <Slider Value="{Binding LineSpacing}" Minimum="1.0" Maximum="2.5"
+                        Style="{StaticResource GlassSlider}" />
+            </StackPanel>
+        </Border>
+    </Popup>
+    </Grid>
 </Window>

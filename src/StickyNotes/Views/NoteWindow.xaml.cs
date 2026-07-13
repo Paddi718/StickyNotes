@@ -8,7 +8,10 @@ using System.Windows.Threading;
 using ContextMenuEventArgs = System.Windows.Controls.ContextMenuEventArgs;
 using Button = System.Windows.Controls.Button;
 using TextBox = System.Windows.Controls.TextBox;
+using Slider = System.Windows.Controls.Slider;
+using Thumb = System.Windows.Controls.Primitives.Thumb;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Key = System.Windows.Input.Key;
 using StickyNotes.Native;
 using StickyNotes.Themes;
@@ -38,6 +41,9 @@ public partial class NoteWindow : Window
         LocationChanged += OnLocationChanged;
         SizeChanged += OnSizeChanged;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+
+        // Backup: re-apply acrylic+border after layout completes
+        Loaded += (_, _) => UpdateAcrylicTint();
     }
 
     /// <summary>
@@ -115,29 +121,24 @@ public partial class NoteWindow : Window
         var opacity = _viewModel.Opacity;
         var isTransparent = opacity <= 0.11;
 
-        Dispatcher.Invoke(() =>
+        if (isTransparent)
         {
-            if (isTransparent)
-            {
-                // Kill all visuals that could create layered-window edge artifacts
-                GlassBorder.CornerRadius = new CornerRadius(0);
-                GlassBorder.ClipToBounds = false;
-                GlassBorder.BorderThickness = new Thickness(0);
-                GlassBorder.BorderBrush = null;
-                GlassBorder.Background = new SolidColorBrush(
-                    System.Windows.Media.Color.FromArgb(1, 255, 255, 255));
-            }
-            else
-            {
-                // Restore frosted-glass card look
-                GlassBorder.CornerRadius = new CornerRadius(12);
-                GlassBorder.ClipToBounds = true;
-                GlassBorder.BorderThickness = new Thickness(1);
-                GlassBorder.BorderBrush = (System.Windows.Media.Brush)FindResource("GlassBorderBrush");
-                GlassBorder.Background = new SolidColorBrush(
-                    System.Windows.Media.Color.FromArgb(1, 255, 255, 255));
-            }
-        });
+            GlassBorder.CornerRadius = new CornerRadius(0);
+            GlassBorder.ClipToBounds = false;
+            GlassBorder.BorderThickness = new Thickness(0);
+            GlassBorder.BorderBrush = null;
+            GlassBorder.Background = new SolidColorBrush(
+                System.Windows.Media.Color.FromArgb(1, 255, 255, 255));
+        }
+        else
+        {
+            GlassBorder.CornerRadius = new CornerRadius(12);
+            GlassBorder.ClipToBounds = true;
+            GlassBorder.BorderThickness = new Thickness(1);
+            GlassBorder.BorderBrush = (System.Windows.Media.Brush)FindResource("GlassBorderBrush");
+            GlassBorder.Background = new SolidColorBrush(
+                System.Windows.Media.Color.FromArgb(1, 255, 255, 255));
+        }
 
         SafeExec.Try(() =>
         {
@@ -282,62 +283,26 @@ public partial class NoteWindow : Window
     }
 
     /// <summary>
-    /// Title-bar drag using Preview (tunnel) event so we can intercept clicks
-    /// BEFORE the title TextBox swallows them.
-    ///
-    /// Behavior:
-    ///   - Click on a button        → button works normally (no drag)
-    ///   - Single-click on title    → drag the window (TextBox stays unfocused)
-    ///   - Double-click on title    → enter edit mode (focus + select all)
-    ///   - Click while editing      → position cursor inside TextBox
-    ///   - Click on empty title bar → drag
-    ///   - Click while locked       → no drag (let clicks pass through)
+    /// Border drag: allows moving the window by dragging anywhere on the border
+    /// area, except when clicking buttons or editing text.
     /// </summary>
-    private void TitleBar_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void TopBar_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        // When locked, don't allow dragging — let clicks pass through to
-        // the content (read-only) or context menu.
         if (_viewModel.IsLocked) return;
 
-        // Let buttons handle their own clicks. The OriginalSource for a Button
-        // with text content is a TextBlock inside a ContentPresenter, NOT the
-        // Button itself — so we must walk the visual tree to detect it.
-        if (e.OriginalSource is DependencyObject btnSource && FindAncestor<Button>(btnSource) != null)
-            return;
-
-        // Check if the click landed on the title TextBox
-        if (e.OriginalSource is DependencyObject d && FindAncestor<TextBox>(d) is { } tb)
+        if (e.OriginalSource is DependencyObject src)
         {
-            // If already editing, let the click position the cursor
-            if (tb.IsKeyboardFocusWithin)
-                return;
-
-            // Double-click enters edit mode
-            if (e.ClickCount >= 2)
-            {
-                tb.Focus();
-                tb.SelectAll();
-                e.Handled = true;
-                return;
-            }
-
-            // Single click on non-editing TextBox → drag.
-            // Mark handled so the TextBox doesn't steal focus.
-            e.Handled = true;
+            // Let interactive controls handle their own clicks
+            if (FindAncestor<Button>(src) != null) return;
+            if (FindAncestor<TextBox>(src) != null) return;
+            if (FindAncestor<Slider>(src) != null) return;
+            if (FindAncestor<Thumb>(src) != null) return;
         }
 
-        try
-        {
-            DragMove();
-        }
-        catch (InvalidOperationException)
-        {
-            // DragMove throws if the left button is already up — ignore
-        }
-        catch
-        {
-            // Swallow any other drag errors — never crash the note
-        }
+        ClosePopups();
+        try { DragMove(); }
+        catch (InvalidOperationException) { }
+        catch { }
     }
 
     private void OnLocationChanged(object? sender, EventArgs e)
@@ -420,21 +385,74 @@ public partial class NoteWindow : Window
     }
 
     /// <summary>
-    /// Click on ☐/☑ glyph → toggle. Otherwise let the click pass through.
+    /// Click on ☐/☑ glyph → toggle.
     /// </summary>
     private void ContentBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        var pos = e.GetPosition(ContentBox);
-        var charIndex = ContentBox.GetCharacterIndexFromPoint(pos, true);
-        if (charIndex < 0) return;
-        var text = ContentBox.Text;
-        if (charIndex < text.Length && (text[charIndex] == '☐' || text[charIndex] == '☑'))
+        if (IsOverCheckbox(out var charIndex))
         {
-            // Don't use ToggleWithCaretRestore here — the mouse click itself
-            // will set the caret, so just toggle at the clicked position
             _viewModel.ToggleTodoAtCursor(charIndex);
             e.Handled = true;
         }
+    }
+
+    /// <summary>
+    /// Hand cursor when hovering over ☐/☑.
+    /// </summary>
+    private void ContentBox_PreviewMouseMove(object sender, MouseEventArgs e)
+    {
+        ContentBox.Cursor = IsOverCheckbox(out _) ? System.Windows.Input.Cursors.Hand : null;
+    }
+
+    private bool IsOverCheckbox(out int charIndex)
+    {
+        charIndex = -1;
+        var pos = System.Windows.Input.Mouse.GetPosition(ContentBox);
+        charIndex = ContentBox.GetCharacterIndexFromPoint(pos, true);
+        if (charIndex < 0) return false;
+        var text = ContentBox.Text;
+        return charIndex < text.Length
+            && (text[charIndex] == '☐' || text[charIndex] == '☑');
+    }
+
+    /// <summary>
+    /// Toggle font size popup slider.
+    /// </summary>
+    private void FontSizeBtn_Click(object sender, RoutedEventArgs e)
+    {
+        LineSpacingPopup.IsOpen = false;
+        FontSizePopup.IsOpen = !FontSizePopup.IsOpen;
+    }
+
+    /// <summary>
+    /// Toggle line spacing popup slider.
+    /// </summary>
+    private void LineSpacingBtn_Click(object sender, RoutedEventArgs e)
+    {
+        FontSizePopup.IsOpen = false;
+        LineSpacingPopup.IsOpen = !LineSpacingPopup.IsOpen;
+    }
+
+    private void ClosePopups()
+    {
+        FontSizePopup.IsOpen = false;
+        LineSpacingPopup.IsOpen = false;
+    }
+
+    private void PopupContent_MouseLeave(object sender, MouseEventArgs e)
+    {
+        ClosePopups();
+    }
+
+    /// <summary>
+    /// Clear all completed (☑) lines from the content.
+    /// </summary>
+    private void ClearCompleted_Click(object sender, RoutedEventArgs e)
+    {
+        var lines = _viewModel.Content.Split('\n')
+            .Where(line => !line.StartsWith("☑ "))
+            .ToArray();
+        _viewModel.Content = string.Join("\n", lines);
     }
 
     /// <summary>Toggle and keep caret on the same line.</summary>

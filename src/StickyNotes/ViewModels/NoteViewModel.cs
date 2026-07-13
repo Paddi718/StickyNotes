@@ -223,11 +223,37 @@ public sealed class NoteViewModel : ViewModelBase
         var after = text[lineEnd..];
 
         if (line.StartsWith("☑ "))
-            Content = before + "☐ " + line[2..] + after;
+            // Uncheck: remove strikethrough + toggle glyph
+            Content = before + "☐ " + StripStrikethrough(line[2..]) + after;
         else if (line.StartsWith("☐ "))
-            Content = before + "☑ " + line[2..] + after;
+            // Check: add strikethrough
+            Content = before + "☑ " + ApplyStrikethrough(line[2..]) + after;
         else
+            // Plain text → todo (unchecked, no strikethrough)
             Content = before + "☐ " + line + after;
+    }
+
+    private const char StrikeChar = '̶'; // Combining Long Stroke Overlay
+
+    private static string ApplyStrikethrough(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return s;
+        var sb = new System.Text.StringBuilder(s.Length * 2);
+        foreach (var c in s)
+        {
+            sb.Append(c);
+            if (c > ' ') sb.Append(StrikeChar); // Only visible chars
+        }
+        return sb.ToString();
+    }
+
+    private static string StripStrikethrough(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return s;
+        var sb = new System.Text.StringBuilder(s.Length);
+        foreach (var c in s)
+            if (c != StrikeChar) sb.Append(c);
+        return sb.ToString();
     }
 
     /// <summary>Converts display glyphs back to Markdown for disk storage.</summary>
